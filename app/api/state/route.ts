@@ -1,0 +1,6 @@
+import { env } from 'cloudflare:workers';
+
+const initialState = { version: 0, wallets: { Globe: 0, Smart: 0, GCash: 0 }, customers: [], transactions: [] };
+async function ensureTable() { await env.DB.prepare(`CREATE TABLE IF NOT EXISTS app_state (id INTEGER PRIMARY KEY, state_json TEXT NOT NULL, updated_at INTEGER NOT NULL)`).run(); }
+export async function GET() { await ensureTable(); const row = await env.DB.prepare('SELECT state_json FROM app_state WHERE id = 1').first<{ state_json: string }>(); return Response.json({ state: row ? JSON.parse(row.state_json) : initialState }); }
+export async function PUT(request: Request) { await ensureTable(); const body = await request.json() as { state?: unknown }; if (!body.state || typeof body.state !== 'object') return Response.json({ error: 'Invalid state' }, { status: 400 }); const stateJson = JSON.stringify(body.state); if (stateJson.length > 2_000_000) return Response.json({ error: 'Ledger is too large' }, { status: 413 }); await env.DB.prepare(`INSERT INTO app_state (id, state_json, updated_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET state_json = excluded.state_json, updated_at = excluded.updated_at`).bind(stateJson, Date.now()).run(); return Response.json({ ok: true }); }
