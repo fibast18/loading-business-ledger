@@ -1,0 +1,28 @@
+Loading Business Ledger v1.0.4 — Offline installation
+====================================================
+
+Upload the contents of this ZIP together to the SAME GitHub Pages folder:
+  index.html
+  sw.js
+  manifest.webmanifest
+  offline-icon-192.png
+  offline-icon-512.png
+
+Keep your existing logo/image files in that same folder:
+  rico-logo.png, globe-logo.svg, smart-logo.svg, gcash-logo.svg,
+  favicon.svg, apple-touch-icon.png (if those already exist).
+
+IMPORTANT FIRST-USE LIMITATION
+- A GitHub Pages URL cannot work on a device that has NEVER downloaded its files.
+- On each device, connect to the internet at least once, open the website,
+  and wait for the 'Offline ready' message.
+- On iPhone, Add to Home Screen and then OPEN THE HOME SCREEN APP ONCE ONLINE,
+  waiting for 'Offline ready' before testing flight mode.
+- After that, the app shell and locally saved ledger records work offline.
+- On-device browser generative AI may need an initial model download;
+  the built-in rules-based Analyst / Ask AI / Advisor work offline.
+- No cloud sync: different devices have separate local records.
+- Back up your ledger to a JSON file before changing versions or clearing data.
+
+This update leaves the localStorage key 'loading-business-ledger', transaction
+schema, JSON Backup/Restore, and AI Business Center unchanged.
