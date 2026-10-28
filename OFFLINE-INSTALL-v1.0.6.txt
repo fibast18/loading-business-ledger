@@ -1,0 +1,35 @@
+Loading Business Ledger v1.0.6 — Offline diagnostics and improved update flow
+=================================================================
+
+Before deploying, export a JSON Backup in your currently working app.
+Upload these files into the SAME PUBLIC WEB FOLDER as index.html:
+  index.html
+  sw.js
+  manifest.webmanifest
+  offline-icon-192.png
+  offline-icon-512.png
+
+KEEP the current logo files in the folder as well:
+  rico-logo.png, globe-logo.svg, smart-logo.svg, gcash-logo.svg,
+  apple-touch-icon.png, favicon.svg (where present).
+
+The v1.0.6 worker can install even if some optional logos are absent.
+The app checks sw.js availability and MIME type before registration and
+shows real failure reasons in a yellow notification.
+
+For iPhone: Open the LIVE WEBSITE in Safari while online; refresh once or twice
+because an older service worker might supply old HTML. Wait for the message
+"Offline ready". Then open the Home Screen copy online, allow installation,
+and test closing and reopening in Airplane Mode.
+
+If the message says "sw.js not found (HTTP 404)", the service worker is not
+in the same web directory as index.html. If "wrong content type", your host
+is serving a non-JavaScript response. If the worker stays "active" without
+a cached index, check the live HTML route.
+
+Do not delete the app, clear website data, or switch URLs unless you have
+backed up and confirmed restore; each device/browser stores records locally.
+
+A web app never previously loaded on a device cannot be opened from GitHub
+Pages without internet. The required app files must first be installed online.
+This release does not change the ledger's record schema or transaction logic.
