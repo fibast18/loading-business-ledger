@@ -1,0 +1,25 @@
+{
+  "name": "Loading Business Ledger",
+  "short_name": "Load Ledger",
+  "description": "Local-first wallet, client and loading business ledger with built-in AI analysis.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6faf7",
+  "theme_color": "#276244",
+  "icons": [
+    {
+      "src": "./offline-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./offline-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
