@@ -1,7 +1,7 @@
-/* Loading Business Ledger v1.0.7 - complete, same-origin offline app shell.
+/* Loading Business Ledger v1.0.8 - complete, same-origin offline app shell.
    No access to localStorage, IndexedDB, or business transaction data. */
 'use strict';
-const VERSION = '1.0.7';
+const VERSION = '1.0.8';
 const CACHE = 'loading-business-ledger-shell-v'+VERSION;
 const PREFIX = 'loading-business-ledger-shell-v';
 const BASE = new URL('./',self.registration.scope);

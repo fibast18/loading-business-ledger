@@ -1,4 +1,4 @@
-LOADING BUSINESS LEDGER v1.0.7 — COMPLETE GITHUB PAGES UPLOAD
+LOADING BUSINESS LEDGER v1.0.8 — COMPLETE GITHUB PAGES UPLOAD
 ===========================================================
 
 FILES (all 11 required app files are included; use exactly these names):
@@ -35,7 +35,7 @@ HOW TO DEPLOY
 
 IF YOU SEE "OFFLINE WORKER NOT READY":
   Check the published URL /sw.js in Safari. The text near the top should say:
-  const VERSION = '1.0.7';
+  const VERSION = '1.0.8';
   In a subpath deployment, add /sw.js to the SUBPATH URL, not the domain root.
   If you still see an older version, ensure GitHub has committed the NEW file,
   Pages deployment has completed, and open Safari to refresh.
@@ -49,5 +49,11 @@ DATA SAFETY
   The local rule-based AI works offline; optional browser generative AI requires
   a supported browser/model installed in advance.
 
-Preserved from v1.0.6: wallets, transaction math, customers, AI page, interest,
+Preserved from v1.0.7: wallets, transaction math, customers, AI page, interest,
 Backup/Restore, History, and local data schema. CSV buttons remain removed.
+
+WHAT IS NEW IN v1.0.8
+  Added "Developed by: Engr. Rico J. Pono" directly above the app
+  version on the shared footer, so it appears on Overview, Clients, AI,
+  and History tabs. No business calculations, local storage keys, backup
+  format, or other app features were changed.
