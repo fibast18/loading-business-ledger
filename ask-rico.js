@@ -1,10 +1,31 @@
-/* Ask Rico v1.0.9. Separate UI; never writes to loading-business-ledger. */
+/* Ask Rico v1.0.10. Separate UI; never writes to loading-business-ledger. */
 (()=>{
   'use strict';
   const root=document.getElementById('ask-rico-root');
   if(!root)return;
   const WORKER_KEY='ask-rico-worker-url-v1';
-  const STATE={endpoint:localStorage.getItem(WORKER_KEY)||'',code:'',messages:[],busy:false};
+  const SESSION_KEY='ask-rico-device-session-v1';
+  const savedEndpoint=localStorage.getItem(WORKER_KEY)||'';
+  function readSavedSession(){
+    try{
+      const x=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+      if(x&&x.endpoint===savedEndpoint&&typeof x.token==='string'&&x.token.length<2200&&
+         Number(x.expiresAt)>Date.now()+5000)return x;
+    }catch(_){ }
+    localStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+  const restored=readSavedSession();
+  const STATE={endpoint:savedEndpoint,token:restored?.token||'',expiresAt:restored?.expiresAt||0,
+    remember:!!restored,messages:[],busy:false};
+  function clearAuthorization(){
+    STATE.token='';STATE.expiresAt=0;localStorage.removeItem(SESSION_KEY);
+  }
+  function storeAuthorization(){
+    if(STATE.remember&&STATE.token&&STATE.expiresAt>Date.now())
+      localStorage.setItem(SESSION_KEY,JSON.stringify({endpoint:STATE.endpoint,token:STATE.token,expiresAt:STATE.expiresAt}));
+    else localStorage.removeItem(SESSION_KEY);
+  }
   const esc=(id)=>root.querySelector('#'+id);
   root.innerHTML=`
     <button id="ask-rico-launch" type="button" aria-expanded="false" aria-controls="ask-rico-panel"><span class="ask-rico-spark">✦</span><span>Ask Rico</span></button>
@@ -21,9 +42,11 @@
         <strong>Connect your paid OpenAI assistant</strong>
         <p class="ask-rico-settings-caption">First deploy the included Cloudflare Worker. Your OpenAI API key belongs in the Worker's secret settings, never in this app.</p>
         <label class="ask-rico-field">Cloudflare Worker URL<input class="ask-rico-input" id="ask-rico-endpoint" type="url" placeholder="https://ask-rico.your-name.workers.dev" autocomplete="off"></label>
-        <label class="ask-rico-field">Private Ask Rico access code<input class="ask-rico-input" id="ask-rico-access" type="password" placeholder="Code configured in Worker" autocomplete="off"></label>
-        <p class="ask-rico-settings-caption">The Worker URL is saved on this device. Your access code remains in memory only and must be re-entered after a page reload.</p>
-        <div class="ask-rico-settings-actions"><button class="ask-rico-action primary" type="button" id="ask-rico-save">Save & close</button><button class="ask-rico-action" type="button" id="ask-rico-cancel">Cancel</button></div>
+        <label class="ask-rico-field">Private Ask Rico access code<input class="ask-rico-input" id="ask-rico-access" type="password" placeholder="Enter once to authorize this device" autocomplete="off"></label>
+        <label class="ask-rico-remember"><input type="checkbox" id="ask-rico-remember"> Remember this device for 30 days</label>
+        <p class="ask-rico-settings-caption" id="ask-rico-device-caption">Your original access code is never saved. A temporary authorization is saved only if you choose to remember this device. Avoid this option on a shared phone or computer.</p>
+        <div class="ask-rico-settings-actions"><button class="ask-rico-action primary" type="button" id="ask-rico-save">Connect & save</button><button class="ask-rico-action" type="button" id="ask-rico-cancel">Cancel</button></div>
+        <button class="ask-rico-action ask-rico-forget" type="button" id="ask-rico-forget">Forget this device</button>
         <p id="ask-rico-settings-status" class="ask-rico-status" role="status"></p>
       </div>
     </section>`;
@@ -39,22 +62,52 @@
   }
   function showSettings(){
     esc('ask-rico-endpoint').value=STATE.endpoint;
-    esc('ask-rico-access').value=STATE.code;
+    esc('ask-rico-access').value='';
+    esc('ask-rico-remember').checked=STATE.remember;
     esc('ask-rico-settings-status').textContent='';
+    esc('ask-rico-device-caption').textContent=STATE.token&&STATE.expiresAt>Date.now()
+      ?'Device authorized until '+new Date(STATE.expiresAt).toLocaleDateString()+'. Your access code is not stored. Uncheck Remember to keep access only until the app is closed or reloaded.'
+      :'Enter your private access code once. Remembering this device saves only a 30-day authorization, not your original code or OpenAI API key.';
     settings.hidden=false;
   }
-  function saveSettings(){
+  async function saveSettings(){
+    if(STATE.busy)return;
     const u=esc('ask-rico-endpoint').value.trim().replace(/\/+$/,'');
     const code=esc('ask-rico-access').value.trim();
+    const remember=esc('ask-rico-remember').checked;
+    const save=esc('ask-rico-save');const status=esc('ask-rico-settings-status');
     let parsed;
-    try{parsed=new URL(u);}catch(_){esc('ask-rico-settings-status').textContent='Enter a valid Worker URL.';return;}
-    if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.search||parsed.hash){esc('ask-rico-settings-status').textContent='Use a secure https:// Worker URL with no password or query.';return;}
-    if(!code||code.length<12){esc('ask-rico-settings-status').textContent='Enter the private access code (at least 12 characters).';return;}
-    STATE.endpoint=parsed.origin+parsed.pathname.replace(/\/+$/,'');STATE.code=code;
-    localStorage.setItem(WORKER_KEY,STATE.endpoint);
-    settings.hidden=true;
-    message('Connection settings saved. Ask your question when online. I can read ledger summaries only if you enable the option above.','bot',false);
-    input.focus();
+    try{parsed=new URL(u);}catch(_){status.textContent='Enter a valid Worker URL.';return;}
+    if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.search||parsed.hash){status.textContent='Use a secure https:// Worker URL with no password or query.';return;}
+    const endpoint=parsed.origin+parsed.pathname.replace(/\/+$/,'');
+    if(!code&&STATE.token&&STATE.expiresAt>Date.now()&&endpoint===STATE.endpoint){
+      STATE.remember=remember;storeAuthorization();settings.hidden=true;input.focus();return;
+    }
+    if(code.length<12){status.textContent='Enter the private access code (at least 12 characters).';return;}
+    if(!navigator.onLine){status.textContent='Connect to the internet to authorize this device.';return;}
+    save.disabled=true;save.textContent='Connecting…';status.textContent='Checking your access code securely…';
+    const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);
+    try{
+      const res=await fetch(endpoint+'/api/session',{
+        method:'POST',headers:{'Content-Type':'application/json','X-Ask-Rico-Code':code},
+        body:'{}',signal:controller.signal,cache:'no-store'
+      });
+      const data=await res.json().catch(()=>({error:'Invalid response from Worker'}));
+      if(!res.ok)throw new Error(res.status===404?'The Cloudflare Worker must also be updated to v1.0.10.':data.error||('Worker HTTP '+res.status));
+      if(typeof data.token!=='string'||!Number.isFinite(data.expiresAt)||data.expiresAt<=Date.now())throw new Error('Invalid device authorization from Worker.');
+      STATE.endpoint=endpoint;STATE.token=data.token;STATE.expiresAt=data.expiresAt;STATE.remember=remember;
+      localStorage.setItem(WORKER_KEY,STATE.endpoint);storeAuthorization();
+      esc('ask-rico-access').value='';settings.hidden=true;
+      message(remember?'Device authorized for 30 days. You can now ask questions without re-entering your access code.':'Connected for this app session. Ask Rico is ready.','bot',false);
+      input.focus();
+    }catch(error){status.textContent=error.name==='AbortError'?'Connection timed out. Please retry.':String(error.message||error);}
+    finally{clearTimeout(timeout);save.disabled=false;save.textContent='Connect & save';}
+  }
+  function forgetDevice(){
+    clearAuthorization();STATE.remember=false;esc('ask-rico-access').value='';
+    esc('ask-rico-remember').checked=false;
+    esc('ask-rico-settings-status').textContent='Authorization cleared from this device. Enter your access code to reconnect.';
+    esc('ask-rico-device-caption').textContent='Your OpenAI API key remains secure in Cloudflare. You can authorize again at any time.';
   }
   function dateMillis(tx){const t=Date.parse(tx.createdAt);return Number.isFinite(t)?t:0;}
   function amount(x){const v=Number(x||0);return Number.isFinite(v)?Math.round(v*100)/100:0;}
@@ -104,7 +157,9 @@
   async function submit(e){
     if(e)e.preventDefault();
     const q=input.value.trim();if(STATE.busy||!q)return;
-    if(!STATE.endpoint||!STATE.code){showSettings();esc('ask-rico-settings-status').textContent='Set the Cloudflare URL and private access code before sending.';return;}
+    if(!STATE.endpoint||!STATE.token||STATE.expiresAt<=Date.now()){
+      clearAuthorization();showSettings();esc('ask-rico-settings-status').textContent='Authorize this device once to send questions.';return;
+    }
     if(!navigator.onLine){message('Ask Rico needs an internet connection for paid OpenAI replies. The original AI tab remains available offline.','error',false);return;}
     message(q,'user');input.value='';STATE.busy=true;btn.disabled=true;btn.textContent='…';
     const pending=document.createElement('div');pending.className='ask-rico-message bot';pending.textContent='Ask Rico is thinking…';log.appendChild(pending);log.scrollTop=log.scrollHeight;
@@ -112,19 +167,23 @@
     try{
       const useLedger=esc('ask-rico-include-summary').checked;
       const body={messages:STATE.messages.slice(-10),ledgerSnapshot:useLedger?snapshot(esc('ask-rico-include-names').checked):null};
-      const res=await fetch(STATE.endpoint+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Ask-Rico-Code':STATE.code},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});
+      const res=await fetch(STATE.endpoint+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Ask-Rico-Session':STATE.token},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});
       const data=await res.json().catch(()=>({error:'Invalid response from backend'}));
-      if(!res.ok)throw new Error(data.error||('Worker HTTP '+res.status));
+      if(!res.ok){
+        if(res.status===401){clearAuthorization();showSettings();esc('ask-rico-settings-status').textContent='Device authorization expired or was revoked. Enter the access code again.';}
+        throw new Error(data.error||('Worker HTTP '+res.status));
+      }
       pending.remove();message(data.reply||'No answer returned.','bot');
       if(typeof data.remainingToday==='number')esc('ask-rico-settings-btn').title='Connection settings • '+data.remainingToday+' requests left today';
     }catch(error){pending.remove();message(error.name==='AbortError'?'Request timed out. Try a shorter question.':String(error.message||error),'error',false);}
     finally{clearTimeout(timeout);STATE.busy=false;btn.disabled=false;btn.textContent='Send';input.focus();}
   }
-  function toggle(){panel.hidden=!panel.hidden;esc('ask-rico-launch').setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden){if(!STATE.messages.length&&log.childElementCount===0)message('Hello, Boss! I’m Ask Rico, your paid OpenAI assistant. Ask anything about your loading business or general questions. Enable “Use ledger summary” when you want me to analyze your actual figures.','bot',false);if(!STATE.endpoint||!STATE.code)showSettings();else input.focus();}}
+  function toggle(){panel.hidden=!panel.hidden;esc('ask-rico-launch').setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden){if(!STATE.messages.length&&log.childElementCount===0)message('Hello, Boss! I’m Ask Rico, your paid OpenAI assistant. Ask anything about your loading business or general questions. Enable “Use ledger summary” when you want me to analyze your actual figures.','bot',false);if(!STATE.endpoint||!STATE.token||STATE.expiresAt<=Date.now()){clearAuthorization();showSettings();}else input.focus();}}
   esc('ask-rico-launch').addEventListener('click',toggle);
   esc('ask-rico-close').addEventListener('click',toggle);
   esc('ask-rico-settings-btn').addEventListener('click',()=>settings.hidden?showSettings():settings.hidden=true);
   esc('ask-rico-save').addEventListener('click',saveSettings);
+  esc('ask-rico-forget').addEventListener('click',forgetDevice);
   esc('ask-rico-cancel').addEventListener('click',()=>settings.hidden=true);
   esc('ask-rico-form').addEventListener('submit',submit);
   input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submit();}});
