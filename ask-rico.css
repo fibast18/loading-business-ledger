@@ -1,0 +1,31 @@
+/* Ask Rico, v1.0.9: separate from the business ledger React state. */
+#ask-rico-root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14px;color:#142c23}
+#ask-rico-root *,#ask-rico-root *::before,#ask-rico-root *::after{box-sizing:border-box}
+#ask-rico-launch{position:fixed;bottom:calc(92px + env(safe-area-inset-bottom,0px));right:16px;z-index:102;display:flex;align-items:center;gap:9px;border:1px solid #b5dfc8;background:#00613b;color:white;padding:12px 17px;border-radius:100px;box-shadow:0 8px 26px #001f1f3d;font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:48px;cursor:pointer}
+#ask-rico-launch:hover{background:#004d30}#ask-rico-launch:focus-visible,.ask-rico-icon-button:focus-visible,#ask-rico-send:focus-visible{outline:3px solid #8acfb3;outline-offset:2px}
+#ask-rico-launch .ask-rico-spark{font-size:22px;line-height:1}
+#ask-rico-panel{position:fixed;z-index:103;bottom:calc(150px + env(safe-area-inset-bottom,0px));right:12px;width:min(408px,calc(100vw - 24px));height:min(570px,calc(100dvh - 180px));min-height:320px;border:1px solid #d6e3d9;border-radius:20px;background:#f8faf8;box-shadow:0 14px 48px #102e2540;display:flex;flex-direction:column;overflow:hidden}
+#ask-rico-panel[hidden],#ask-rico-settings[hidden],#ask-rico-indicator[hidden]{display:none!important}
+.ask-rico-head{background:#035c3d;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.ask-rico-mark{background:#ffffff24;border:1px solid #ffffff4a;display:grid;place-items:center;width:37px;height:37px;border-radius:13px;font-size:22px}
+.ask-rico-head-title{flex:1;min-width:0}.ask-rico-head-title strong{display:block;font-size:16px}.ask-rico-head-title small{display:block;color:#d3f5e3;margin-top:3px;font-size:11px}
+.ask-rico-icon-button{background:transparent;border:0;color:inherit;cursor:pointer;padding:8px;border-radius:10px;font-size:19px;line-height:1;min-width:34px;min-height:34px}
+.ask-rico-icon-button:hover{background:#ffffff23}.ask-rico-disclosure{padding:9px 13px;background:#eaf6f0;color:#315446;font-size:11px;line-height:1.45;border-bottom:1px solid #d5e5dc}
+#ask-rico-messages{flex:1;overflow-y:auto;padding:15px 13px;display:flex;flex-direction:column;gap:11px;min-height:70px;overscroll-behavior:contain}
+.ask-rico-message{max-width:91%;padding:11px 13px;border-radius:15px;line-height:1.5;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 1px 3px #08271912}
+.ask-rico-message.bot{align-self:flex-start;background:#fff;border:1px solid #dce8e0;border-bottom-left-radius:4px}
+.ask-rico-message.user{align-self:flex-end;background:#dbf2e6;color:#073820;border-bottom-right-radius:4px}
+.ask-rico-message.error{align-self:flex-start;background:#fff5eb;color:#70400f;border:1px solid #efd4b8}
+.ask-rico-controls{background:#fff;border-top:1px solid #dce7e0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
+.ask-rico-options{display:flex;flex-wrap:wrap;gap:5px 12px;margin-bottom:9px}.ask-rico-options label{font-size:11px;display:flex;gap:4px;align-items:center;color:#385949;cursor:pointer}.ask-rico-options input{accent-color:#07603b;width:15px;height:15px}
+.ask-rico-compose{display:flex;gap:6px;align-items:flex-end}.ask-rico-compose textarea{flex:1;min-width:0;min-height:40px;max-height:95px;resize:vertical;border:1px solid #bfcebf;border-radius:11px;padding:10px 11px;font:inherit;color:#0d2318;background:#fff}
+#ask-rico-send{border:0;background:#04613b;color:white;border-radius:11px;min-width:62px;min-height:40px;padding:7px 10px;font-weight:700;cursor:pointer}#ask-rico-send:disabled{opacity:.5;cursor:wait}
+.ask-rico-tip{font-size:10px;color:#698071;margin-top:7px;line-height:1.4}
+#ask-rico-settings{position:absolute;inset:62px 0 0;background:#fff;z-index:2;padding:17px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+#ask-rico-settings label.ask-rico-field{display:flex;flex-direction:column;gap:5px;color:#2b4739;font-size:12px;font-weight:700}
+#ask-rico-settings input.ask-rico-input{border:1px solid #c6d6cb;padding:11px;border-radius:10px;width:100%;font:inherit;font-weight:400;min-height:44px}
+.ask-rico-settings-actions{display:flex;gap:8px}.ask-rico-action{border:1px solid #97b3a1;background:#f4faf6;color:#04583a;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer}
+.ask-rico-action.primary{background:#00613b;color:white;border-color:#00613b}
+.ask-rico-status{font-size:12px;color:#685d34;line-height:1.5}.ask-rico-settings-caption{color:#577266;font-size:12px;line-height:1.5}
+@media(min-width:640px){#ask-rico-launch{right:20px;bottom:20px}#ask-rico-panel{right:20px;bottom:80px;height:min(575px,calc(100dvh - 110px))}}
+@media(max-width:390px){#ask-rico-panel{bottom:calc(145px + env(safe-area-inset-bottom,0px));height:min(545px,calc(100dvh - 165px))}#ask-rico-launch{padding:11px 13px}}

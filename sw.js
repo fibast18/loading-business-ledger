@@ -1,7 +1,7 @@
-/* Loading Business Ledger v1.0.8 - complete, same-origin offline app shell.
+/* Loading Business Ledger v1.0.9 - complete, same-origin offline app shell.
    No access to localStorage, IndexedDB, or business transaction data. */
 'use strict';
-const VERSION = '1.0.8';
+const VERSION = '1.0.9';
 const CACHE = 'loading-business-ledger-shell-v'+VERSION;
 const PREFIX = 'loading-business-ledger-shell-v';
 const BASE = new URL('./',self.registration.scope);
@@ -11,7 +11,8 @@ const ROOT = BASE.href;
 const ASSETS = [
   'index.html','manifest.webmanifest','offline-icon-192.png','offline-icon-512.png',
   'favicon.svg','apple-touch-icon.png','rico-logo.png',
-  'globe-logo.svg','smart-logo.svg','gcash-logo.svg'
+  'globe-logo.svg','smart-logo.svg','gcash-logo.svg',
+  'ask-rico.css','ask-rico.js'
 ];
 async function cacheAll(){
   const cache=await caches.open(CACHE);
