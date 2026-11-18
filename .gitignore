@@ -1,0 +1,15 @@
+# Generated GitHub Pages output
+/dist/
+
+# Local dependencies and caches
+/node_modules/
+/.wrangler/
+.DS_Store
+*.log
+
+# Never commit paid AI credentials
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
