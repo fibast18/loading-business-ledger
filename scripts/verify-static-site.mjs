@@ -64,6 +64,28 @@ if (process.argv.includes('--build')) {
   mkdirSync(dist, { recursive: true });
   for (const file of ASSETS) copyFileSync(join(ROOT, file), join(dist, file));
   if (existsSync(join(ROOT, 'CNAME'))) copyFileSync(join(ROOT, 'CNAME'), join(dist, 'CNAME'));
+  // Stamp only the published copy, not the source, so existing PWA installs pick up
+  // every successful Git deployment without manually bumping app/business versions.
+  const shortSha = (process.env.GITHUB_SHA || '').slice(0, 8);
+  if (shortSha) {
+    const outputHtml = join(dist, 'index.html');
+    const outputWorker = join(dist, 'sw.js');
+    const htmlText = readFileSync(outputHtml, 'utf8');
+    const workerText = readFileSync(outputWorker, 'utf8');
+    const installerPattern = /var VERSION='([^']+)', CACHE='loading-business-ledger-shell-v'\+VERSION/;
+    const workerPattern = /const VERSION = '([^']+)';/;
+    const htmlVersion = htmlText.match(installerPattern)?.[1];
+    const workerVersion = workerText.match(workerPattern)?.[1];
+    if (!htmlVersion || htmlVersion !== workerVersion) {
+      fail('Offline installer and service-worker versions must match before publishing');
+    }
+    const deployedVersion = htmlVersion + '-git.' + shortSha;
+    writeFileSync(outputHtml, htmlText.replace(installerPattern,
+      "var VERSION='" + deployedVersion + "', CACHE='loading-business-ledger-shell-v'+VERSION"));
+    writeFileSync(outputWorker, workerText.replace(workerPattern,
+      "const VERSION = '" + deployedVersion + "';"));
+    console.log('Offline update revision: ' + deployedVersion);
+  }
   writeFileSync(join(dist, '.nojekyll'), '');
   console.log('Created dist/ with ' + ASSETS.length + ' application files.');
 }
